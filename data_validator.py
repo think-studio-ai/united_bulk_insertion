@@ -1,7 +1,6 @@
 from datetime import datetime
 import pandas as pd
 
-from constants import required_columns
 
 
 def extract_info_from_national_id(national_id):
@@ -48,7 +47,7 @@ def extract_info_from_national_id(national_id):
     except Exception:
         return national_id
 
-def validate_column(df):
+def validate_column(df, required_columns):
     columns_list = list(df.columns)
     for column in columns_list:
         if column not in required_columns:

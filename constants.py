@@ -1,6 +1,16 @@
-required_columns = [
+beneficial_required_columns = [
         "name", "nationalID", "gov", "phone", "subGov", "job",
         "association", "type", "serviceProvided", "serviceProvidedDate"
+    ]
+
+volunteer_required_columns = [
+        "name", "nationalID", "volGov", "phone", "volSubGov", "volJob",
+        "association", "type"
+    ]
+
+coordinators_required_columns = [
+        "name", "nationalID", "jobGov", "phone", "jobSubGov", "coordJob",
+        "association", "type"
     ]
 
 gov_list = ["الاسكندرية", "القاهره" , "المنوفية", "الجيزة",

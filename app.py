@@ -1,8 +1,14 @@
 import logging
 
-from bulk_beneficial import bulk_beneficial
 from elasticsearch import Elasticsearch, helpers
+from fastapi import FastAPI
 import os
+
+from bulk import bulk_file
+from bulk_model import BulkModel
+from constants import (beneficial_required_columns,
+                       volunteer_required_columns,
+                       coordinators_required_columns)
 
 
 # Establish connection to Elastic Cloud
@@ -13,17 +19,31 @@ es = Elasticsearch(
     max_retries=10,
 )
 
-file_path = '/media/zifo/Test/project/data_analysis/data/beneficial_csv/beneficial-bank-elshifa-elmasry.csv'
+app = FastAPI()
 
-try:
-    # Exclude beneficial
-    bulks = bulk_beneficial(file_path=file_path)
+@app.post("bulk")
+async def bulk_insert(bulk_request: BulkModel):
+    try:
+        # Exclude beneficial
+        if bulk_request.type == "beneficial":
+            bulks = bulk_file(file_path=bulk_request.path, required_columns=beneficial_required_columns)
 
-    for bulk in bulks:
-        response = helpers.bulk(es, bulk)
-        success, failed = response
-        logging.info(f"Successfully inserted {success} documents.")
-        es.indices.refresh(index="visualization_new_united")
-except Exception as e:
-    logging.error(f"Failed to bulk insert data: {e}")
-    raise e
+        elif bulk_request.type == "volunteer":
+            bulks = bulk_file(file_path=bulk_request.path, required_columns=volunteer_required_columns)
+
+        elif bulk_request.type == "coordinators":
+            bulks = bulk_file(file_path=bulk_request.path, required_columns=coordinators_required_columns)
+
+        else:
+            logging.error("Invalid type provided")
+            raise ValueError("Invalid type provided")
+
+        for bulk in bulks:
+            response = helpers.bulk(es, bulk)
+            success, failed = response
+            logging.info(f"Successfully inserted {success} documents.")
+            es.indices.refresh(index="visualization_new_united")
+        return {"Bulks inserted successfully"}
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        return {"An error occurred"}

@@ -3,11 +3,12 @@ import logging
 import pandas as pd
 
 from constants import gov_list
-from data_validator import extract_info_from_national_id, validate_column, validate_column_unique_values, validate_gov_column, \
-    collect_services
+from data_validator import (extract_info_from_national_id, validate_column,
+                            validate_column_unique_values, validate_gov_column,
+                            collect_services)
 
 
-def bulk_beneficial(file_path):
+def bulk_file(file_path, required_columns):
     try:
         invalid_item = []
 
@@ -18,13 +19,13 @@ def bulk_beneficial(file_path):
             batch = df.iloc[start:end]
 
             # Validate columns
-            # Terminate
-            check_column = validate_column(df)
+            # Terminate if invalid
+            check_column = validate_column(df, required_columns)
             if not check_column:
                 raise ValueError("Invalid columns in the CSV file.")
 
             # Validate column values
-            # Terminate
+            # Terminate if invalid
             check_association_column = validate_column_unique_values(df, 'association')
             if not check_association_column:
                 raise ValueError("Invalid values in the association column.")
@@ -34,16 +35,16 @@ def bulk_beneficial(file_path):
                 raise ValueError("Invalid values in the type column.")
 
             # Validate the Gov
-            # Terminate
-            check_gov = validate_gov_column(df, gov_list)
-            if not check_gov:
-                raise ValueError("Invalid values in the gov column.")
+            # Terminate if invalid
+            if 'gov' in df.columns:
+                check_gov = validate_gov_column(df, gov_list)
+                if not check_gov:
+                    raise ValueError("Invalid values in the gov column.")
 
             for _, row in batch.iterrows():
                 document = row.to_dict()
 
                 # Ensure that person_details is a dictionary
-                # add to invalid
                 person_details = extract_info_from_national_id(document['nationalID'])
 
                 if isinstance(person_details, dict):
@@ -179,7 +180,6 @@ def bulk_beneficial(file_path):
                     yield insertion_doc
                 else:
                     invalid_item.append(row)
-
 
         if invalid_item:
             try:

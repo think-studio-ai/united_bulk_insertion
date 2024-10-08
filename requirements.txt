@@ -1,0 +1,4 @@
+pandas==2.2.3
+fastapi==0.110.2
+elasticsearch==8.15.1
+pydantic~=2.8.2
